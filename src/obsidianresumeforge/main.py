@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import os
 import sys
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def _patch_safe_paths() -> None:
