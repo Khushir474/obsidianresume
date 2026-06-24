@@ -1,11 +1,13 @@
 ---
 classify_role:
   description: |-
-    Read the full JD text at {jd_file_path} and all role instruction files in {role_instructions_folder}.
+    **Step 1 — Read the JD (one FileReadTool call):**
+    The JD file path is already provided: {jd_file_path}
+    Call FileReadTool with exactly that path. Do NOT search for JDs, do NOT list any directory, do NOT guess a path — use {jd_file_path} verbatim.
 
-    **How to read the role files:**
-    1. Use DirectoryReadTool on {role_instructions_folder} to list all .md files.
-    2. For each .md file path returned, use FileReadTool to read its content individually.
+    **Step 2 — Read all role instruction files:**
+    1. Call DirectoryReadTool on {role_instructions_folder} to list all .md files.
+    2. For each .md file path returned, call FileReadTool to read its content individually.
     Do NOT pass the folder path to FileReadTool — it only accepts file paths.
 
     **File format notes:**
