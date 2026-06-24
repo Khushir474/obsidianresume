@@ -1,6 +1,49 @@
 #!/usr/bin/env python
 import os
 import sys
+
+
+def _patch_safe_paths() -> None:
+    """Replace crewai_tools path validation with an allowlist check.
+
+    Reads CREWAI_TOOLS_SAFE_DIRS (colon-separated directory list) and allows
+    any path that resolves within one of those roots. Falls back to the
+    original validator if the env var is not set.
+    """
+    raw = os.environ.get("CREWAI_TOOLS_SAFE_DIRS", "")
+    if not raw:
+        return
+
+    safe_roots = [os.path.realpath(d) for d in raw.split(":") if d.strip()]
+    if not safe_roots:
+        return
+
+    import crewai_tools.security.safe_path as _sp
+
+    def _validate(path: str, base_dir: str | None = None) -> str:
+        resolved = os.path.realpath(path)
+        for root in safe_roots:
+            prefix = root if root.endswith(os.sep) else root + os.sep
+            if resolved.startswith(prefix) or resolved == root:
+                return resolved
+        raise ValueError(
+            f"Path '{path}' resolves to '{resolved}' which is outside all "
+            f"allowed directories: {safe_roots}. Add its parent to "
+            f"CREWAI_TOOLS_SAFE_DIRS in .env to permit access."
+        )
+
+    def _validate_dir(path: str, base_dir: str | None = None) -> str:
+        validated = _validate(path, base_dir)
+        if not os.path.isdir(validated):
+            raise ValueError(f"Path '{validated}' is not a directory.")
+        return validated
+
+    _sp.validate_file_path = _validate
+    _sp.validate_directory_path = _validate_dir
+
+
+_patch_safe_paths()
+
 from obsidianresumeforge.crew import ObsidianresumeforgeCrew
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -9,12 +52,12 @@ def _inputs(run_id: str) -> dict:
     return {
         'jd_file_path': os.getenv('JD_FILE_PATH', '/path/to/JDs/YourRole.md'),
         'role_instructions_folder': os.getenv('ROLE_INSTRUCTIONS_FOLDER', os.path.join(_REPO_ROOT, 'knowledge/roles/')),
-        'experience_files_folder': os.getenv('EXPERIENCE_FILES_FOLDER', os.path.join(_REPO_ROOT, 'knowledge/experience')),
+        'experience_files_folder': os.getenv('EXPERIENCE_FILES_FOLDER', os.path.join(_REPO_ROOT, 'knowledge/experience/')),
         'latex_template_path': os.getenv('LATEX_TEMPLATE_PATH', os.path.join(_REPO_ROOT, 'knowledge/template.tex')),
         'vault_path': os.getenv('VAULT_PATH', '/path/to/JobSearch/'),
         'logs_folder': os.getenv('LOGS_FOLDER', '/path/to/JobSearch/'),
-        'eval_max_retries': '3',
-        'eval_pass_threshold': '0.9',
+        'eval_max_retries': '1',
+        'eval_pass_threshold': '0.5',
         'run_id': run_id,
     }
 

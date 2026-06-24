@@ -3,6 +3,11 @@ classify_role:
   description: |-
     Read the full JD text at {jd_file_path} and all role instruction files in {role_instructions_folder}.
 
+    **How to read the role files:**
+    1. Use DirectoryReadTool on {role_instructions_folder} to list all .md files.
+    2. For each .md file path returned, use FileReadTool to read its content individually.
+    Do NOT pass the folder path to FileReadTool — it only accepts file paths.
+
     **File format notes:**
     - The role name IS the filename stem (e.g. `ai_ml_engineer.md` → role "AI ML Engineer"). There is no `# Role:` header inside the file.
     - Each file is a flat instruction document. Do not look for structured headers to determine role name — use the filename only.

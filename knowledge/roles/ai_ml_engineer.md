@@ -83,3 +83,7 @@ At the bottom, add:
 "EXTRAPOLATED — PREP BEFORE INTERVIEW"
 For each addition: what was added | what it assumes | one sentence
 on how to talk about it honestly
+
+--- APPENDED FROM JD: AI Engineer ---
+Additional hard keywords: agent architecture, tool calling, structured outputs, JSON schema, MCP-style integration, context orchestration, session memory, hallucination mitigation, retry logic, structured validation, guardrails, evaluation framework, multi-turn testing, regression testing, task-based success metrics, Google Ads API, Meta API, SQL execution, Python code execution, sandboxed code execution, document automation, Google Docs, Google Slides, PDF generation, Google Workspace, embeddings, vector search, RAG architectures, multi-agent workflows, stateful execution, OpenAI, Anthropic, Vertex AI, dbt, BigQuery, Snowflake, Redshift, Cube, Looker, TypeScript
+Additional soft keywords: reliability, guardrails, continuous innovation, collaboration, cross-functional, problem-solving, debugging complex system behavior, communication, internal tools, productivity multiplier

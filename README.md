@@ -20,7 +20,8 @@ crewai install
 ```
 ### Customizing
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
+**Add your `OPENAI_API_KEY` and `OPENROUTER_API_KEY` into the `.env` file**
+**If you are bold you can also set `CREWAI_TOOLS_ALLOW_UNSAFE_PATHS`=true**
 
 - Modify `src/obsidianresumeforge/config/agents.yaml` to define your agents
 - Modify `src/obsidianresumeforge/config/tasks.yaml` to define your tasks

@@ -3,11 +3,8 @@ import os
 from crewai import LLM
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import (
-	FileReadTool,
-	FileWriterTool,
-	DirectoryReadTool,
-)
+from crewai_tools import DirectoryReadTool
+from obsidianresumeforge.tools.custom_tool import CachedFileReadTool, CachedFileWriterTool
 from obsidianresumeforge.tools.judgeval_local_evaluator_runner import JudgevalLocalEvaluatorRunnerTool
 from obsidianresumeforge.tools.cognee_memory_tool import CogneeMemoryTool
 
@@ -28,7 +25,7 @@ class ObsidianresumeforgeCrew:
             config=self.agents_config["ats_keyword_extraction_specialist"],
             
             
-            tools=[				FileReadTool()],
+            tools=[				CachedFileReadTool()],
             reasoning=False,
             max_reasoning_attempts=None,
             inject_date=True,
@@ -55,8 +52,9 @@ class ObsidianresumeforgeCrew:
             config=self.agents_config["role_classification_judge"],
             
             
-            tools=[				FileReadTool(),
-				FileWriterTool(),
+            tools=[				CachedFileReadTool(),
+				CachedFileWriterTool(),
+				DirectoryReadTool(),
 				CogneeMemoryTool()],
             reasoning=False,
             max_reasoning_attempts=None,
@@ -84,7 +82,7 @@ class ObsidianresumeforgeCrew:
             config=self.agents_config["expert_resume_writer_and_ats_optimizer"],
             
             
-            tools=[				FileReadTool(),
+            tools=[				CachedFileReadTool(),
 				DirectoryReadTool(),
 				CogneeMemoryTool()],
             reasoning=False,
@@ -114,7 +112,7 @@ class ObsidianresumeforgeCrew:
             config=self.agents_config["pipeline_quality_evaluator"],
             
             
-            tools=[				FileReadTool(),
+            tools=[				CachedFileReadTool(),
 				JudgevalLocalEvaluatorRunnerTool()],
             reasoning=False,
             max_reasoning_attempts=None,
