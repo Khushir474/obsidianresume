@@ -66,14 +66,15 @@ class ObsidianresumeforgeCrew:
 
             max_execution_time=None,
             llm=LLM(
-                model="openrouter/z-ai/glm-5.1",
-                
-                
+                model="openrouter/z-ai/glm-5",
             ),
-            
+            function_calling_llm=LLM(
+                model="openrouter/google/gemini-2.5-flash-lite",
+            ),
+
         )
-        
-    
+
+
     @agent
     def expert_resume_writer_and_ats_optimizer(self) -> Agent:
         
@@ -95,10 +96,11 @@ class ObsidianresumeforgeCrew:
 
             max_execution_time=None,
             llm=LLM(
+                model="openrouter/z-ai/glm-5",
                 # model="openrouter/anthropic/claude-sonnet-4.6",
-                model="openrouter/z-ai/glm-5.1",
-                
-                
+            ),
+            function_calling_llm=LLM(
+                model="openrouter/google/gemini-2.5-flash-lite",
             ),
             
         )

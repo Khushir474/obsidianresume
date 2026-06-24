@@ -51,6 +51,11 @@ extract_and_score_keywords:
   description: |-
     Using the role classification output from the previous task, extract the `best_role` filename stem from context. Then construct the role instruction file path as: `{role_instructions_folder}/<best_role>.md` and load it using FileReadTool.
 
+    **Tool usage — IMPORTANT:**
+    - Your only tool calls in this task are two FileReadTool calls: one for the role instruction file, one for the JD.
+    - There is no extract_keywords tool, no keyword_extractor tool, and no scoring tool. All keyword extraction and scoring is done in your own reasoning after reading the files.
+    - Do not attempt to call any tool other than FileReadTool.
+
     **File format notes:**
     - The file is a flat instruction document. The keyword extraction guidance begins after the line `STEP 1 — BEFORE WRITING ANYTHING:` (plain text marker, not a markdown header).
     - Read everything between `STEP 1 —` and `STEP 2 —` as the keyword extraction rules to follow.
