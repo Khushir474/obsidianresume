@@ -1,0 +1,145 @@
+%! suppress = MissingImport
+\documentclass[10pt, letterpaper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage{ebgaramond}          % Garamond body font
+\usepackage[margin=0.5in, top=0.47in, bottom=0.4in]{geometry}
+\usepackage{enumitem}            % tight bullet lists
+\usepackage{hyperref}            % clickable links
+\usepackage[dvipsnames]{xcolor}
+\usepackage{microtype}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{booktabs}            % \midrule
+
+% ── Hyperlink style ───────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true,
+  urlcolor=[HTML]{0563C1},
+  linkcolor=black
+}
+
+% ── Section header command ────────────────────────────────────────────────────
+% SmallCaps, 13pt equivalent, rule only beneath
+\newcommand{\ressection}[1]{%
+  \noindent{\large\bfseries\scshape #1}\par%
+  \vspace{1pt}%
+  \hrule height 0.4pt%
+  \vspace{3pt}%
+}
+
+% ── Job entry command ─────────────────────────────────────────────────────────
+% \jobentry{Role}{Company (italic)}{Date}
+\newcommand{\jobentry}[3]{%
+  \noindent\textbf{#1} \textbar{} \textit{#2}\hfill #3\par\vspace{-2pt}%
+}
+
+% ── Education entry ───────────────────────────────────────────────────────────
+% \eduentry{Institution}{Degree}{Date}
+\newcommand{\eduentry}[3]{%
+  \noindent
+  \textbf{#1} \textperiodcentered{} #2\hfill #3\\
+}
+
+% ── Bullet list settings ──────────────────────────────────────────────────────
+\newenvironment{bullets}{%
+  \begin{itemize}[
+    leftmargin=0.125in,
+    itemsep=0pt,
+    parsep=0pt,
+    topsep=0pt,
+    partopsep=0pt,
+    label=\textbullet
+  ]
+}{%
+  \end{itemize}
+}
+
+% ── Suppress page numbers ─────────────────────────────────────────────────────
+\pagestyle{empty}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Name ─────────────────────────────────────────────────────────────────────
+\begin{center}
+  {\fontsize{15}{18}\selectfont\bfseries\fontfamily{ptm}\selectfont Khushi Ranganatha}\\[3pt]
+  Jersey City, NJ \textperiodcentered{}
+  (312)515-4757 \textperiodcentered{}
+  \href{mailto:khushir.analyst@gmail.com}{khushir.analyst@gmail.com} \textperiodcentered{}
+  \href{https://www.linkedin.com/in/khushir/}{linkedin.com/in/khushir/} \textperiodcentered{}
+  \href{https://github.com/Khushir474}{github.com/Khushir474}
+\end{center}
+
+% ── Work Experience ───────────────────────────────────────────────────────────
+\ressection{Work Experience}
+
+\jobentry{Data Science \& AI Engineer}{\fontfamily{ptm}\selectfont iTradeNetwork}{Jun 2025 -- Present}
+\begin{bullets}
+  \item Engineered LangChain agentic AI workflows automating large-scale data normalization; built FAISS-powered ML pipelines processing \textbf{16M+ records in $<$4 mins} via vectorized fuzzy logic and feature engineering
+  \item Delivered \textbf{50K+ transaction mappings at 100\% manufacturer assignment accuracy} using scikit-learn \& PyTorch optimization layers, \textbf{saving 1,733+ hours} of manual analyst effort
+  \item Streamlined end-to-end client data onboarding pipeline via APIs and workflow automation, \textbf{reducing analyst review labor by 75\%} and accelerating client time-to-value
+  \item Built \textbf{KPI dashboards} for ML observability, tracking model drift, accuracy trends, and operational throughput, translating model performance into business impact metrics
+\end{bullets}
+
+\vspace{3pt}
+\jobentry{AI Engineer}{\fontfamily{ptm}\selectfont Intern -- LexLead.ai}{Feb 2025 -- Jun 2025}
+\begin{bullets}
+  \item Architected RAG-based knowledge retrieval systems with LangChain \& LangGraph on GCP/AWS, enabling multi-step agentic reasoning and decision-making
+  \item Drove eval-driven development of LLM pipelines using Jinja prompt workflows and iterative web-search retrieval; ensured data privacy compliance across all AI applications
+  \item Conducted competitive AI market research, translating findings into recommendations to shape product tooling decisions
+\end{bullets}
+
+\vspace{3pt}
+\jobentry{AI Product Manager}{University of Chicago Data Science Institute}{Mar 2024 -- Dec 2024}
+\begin{bullets}
+  \item Founded and shipped a \textbf{zero-to-one AI product end-to-end}; requirements, systems design, and GCP deployment
+  \item Engineered a \textbf{multi-turn agentic interview simulation engine} using Frontier AI and LangChain RAG pipelines
+  \item Built an \textbf{LLM-as-judge scoring framework} backed by custom rubrics developed through user and market research
+  \item Designed a semantic retrieval layer with vector embeddings using context to dynamically surface role-relevant Q\&A, and structured knowledge retrieval for adaptive question generation
+  \item Implemented \textbf{eval-driven development cycles}; iterating on prompt templates, retrieval strategies, and scoring rubrics using qualitative and quantitative feedback
+  \item Scraped, cleaned, and structured industry data using Python/pandas as the knowledge base powering retrieval; deployed as a GCP-hosted web app
+\end{bullets}
+
+\vspace{3pt}
+\jobentry{Data Analyst}{\fontfamily{ptm}\selectfont Intern -- Digitas}{Jun 2024 -- Aug 2024}
+\begin{bullets}
+  \item Analyzed 750K+ customer records via SQL/Python on Databricks (Azure) using statistical modeling and hypothesis testing to drive strategic planning
+  \item Spearheaded \textbf{audience growth and acquisition strategy} for Sephora using Epsilon PeopleCloud segmentation; defined and validated \textbf{full-funnel KPI measurement frameworks}
+  \item Built real-time \textbf{Tableau dashboards} tracking campaign performance metrics; deployed \textbf{AI agent} increasing target audience engagement
+\end{bullets}
+
+\vspace{3pt}
+\jobentry{Associate Data Analyst}{\fontfamily{ptm}\selectfont TEKSystems Global Services}{Sep 2022 -- Feb 2023}
+\begin{bullets}
+  \item Collaborated with cross-functional teams to develop search \& PDF-text conversion of over \textbf{200 documents}
+  \item Applied \textbf{NLP} techniques (tokenization, lemmatization, stop words removal) to process documents
+  \item Reduced search time for information by \textbf{40\%} through improved access provided by the search system
+\end{bullets}
+
+\vspace{3pt}
+\jobentry{Co-Founder {[}student-led e-commerce startup{]}}{\fontfamily{ptm}\selectfont Galaara}{Feb 2020 -- Aug 2022}
+\begin{bullets}
+  \item Executed full-funnel GTM strategy with \textbf{A/B tested} acquisition campaigns and iterative conversion optimization, driving a \textbf{20\% increase in purchases}
+  \item Led cross-functional alignment across product, marketing, and operations; synthesized sales and behavioral data to guide inventory and pricing decisions
+\end{bullets}
+
+\vspace{4pt}
+% ── Skills ───────────────────────────────────────────────────────────────────
+\ressection{Skills}
+
+\noindent Programming Languages: Python, R, SQL, Julia, MongoDB, Cypher, PySpark, C, HTML\\
+\noindent Tools: Databricks, H2O, Jira, Looker, Snowflake, RStudio, Tableau, PowerBI, Neo4j, Excel, Adobe Analytics\\
+\noindent Knowledge: LLM, RAG, Data Cleaning, Data Visualization, Data Analysis, Relational Databases, LangGraph
+
+\vspace{4pt}
+% ── Education ────────────────────────────────────────────────────────────────
+\ressection{Education}
+
+\eduentry{The University of Chicago}{MSc Applied Data Science}{August 2023 -- December 2024}
+\noindent Coursework: Computer Vision, Time Series Forecasting, Predictive Analytics, Conversational AI, Data Mining, Linear \& Non-Linear Models, Leadership \& Consulting, Data Engineering, Statistical Analysis
+
+\eduentry{Nitte Meenakshi Institute of Technology}{BEng Electronics}{September 2018 -- May 2022}
+
+\end{document}

@@ -1,0 +1,4 @@
+User name is [Your Name].
+User is a [Your Role, e.g. Software Engineer].
+User is interested in [Your Focus Area, e.g. AI Agents].
+User is based in [City, State].

@@ -1,0 +1,22 @@
+# secrets
+.env
+
+# personal experience files (use knowledge/experience/example_company.md as template)
+knowledge/experience/*.md
+!knowledge/experience/example_company.md
+
+# personal user profile
+knowledge/user_preference.txt
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# macos
+.DS_Store
+
+# crewai runtime
+.chroma/
+db/

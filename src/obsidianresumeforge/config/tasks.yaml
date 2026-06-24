@@ -1,0 +1,243 @@
+---
+classify_role:
+  description: |-
+    Read the full JD text at {jd_file_path} and all role instruction files in {role_instructions_folder}.
+
+    **File format notes:**
+    - The role name IS the filename stem (e.g. `ai_ml_engineer.md` → role "AI ML Engineer"). There is no `# Role:` header inside the file.
+    - Each file is a flat instruction document. Do not look for structured headers to determine role name — use the filename only.
+
+    For each .md file found in {role_instructions_folder}, score how well the JD matches that role as a confidence percentage. Base scoring on: keyword overlap with role-specific signals in the file content, required skills alignment, seniority cues, and domain language.
+
+    **Confidence thresholds — apply exactly one branch:**
+
+    If the best confidence score is 80% or above:
+    - Return status "matched" with best_role (filename stem), all confidence_scores, and detailed reasoning. No file writes needed.
+
+    If the best confidence score is between 70% and 79% (inclusive):
+    - Return status "partial_match" with best_role (filename stem) and all confidence_scores.
+    - Extract from the JD any hard keywords (tools, frameworks, methodologies) and soft keywords (traits, competencies) that are NOT already present in the matched role file.
+    - Append those new keywords to the existing role file at {role_instructions_folder}/<best_role>.md using FileWriterTool. Read the existing file content first, then append a clearly-marked section at the bottom:
+      ```
+      --- APPENDED FROM JD: <jd_file_path stem> ---
+      Additional hard keywords: <comma-separated list>
+      Additional soft keywords: <comma-separated list>
+      ```
+      Write the full updated content (original + appended block) back to the same file path.
+
+    If the best confidence score is below 70%:
+    - Return status "new_role_suggested"
+    - Propose a new role name (snake_case filename format)
+    - Generate a complete instruction scaffold following the same flat format as existing files in {role_instructions_folder}: STEP 1 section (keyword extraction guidance), STEP 2 section (writing rules), ATS RULES, ROLE-SPECIFIC ATS SIGNALS, SUPPRESS THIS LANGUAGE, EXTRAPOLATION, WRITING STYLE, FORMAT.
+    - Write the scaffold to disk using FileWriterTool with path {role_instructions_folder}/<new_role_name>.md. Confirm the file was written.
+  expected_output: |-
+    A JSON object:
+    {
+      "best_role": "string — filename stem of best-matching role (e.g. 'ai_ml_engineer') or proposed new role name",
+      "confidence_scores": { "ai_ml_engineer": 0.0, ... },
+      "reasoning": "string — detailed explanation of scoring decisions per file",
+      "status": "matched" | "partial_match" | "new_role_suggested",
+      "appended_keywords": { "hard": ["string"], "soft": ["string"] },
+      "scaffold": "string — full flat-format .md scaffold content (only present when status is new_role_suggested)",
+      "file_written": "string — path of file written or appended (omitted when status is matched)"
+    }
+  agent: role_classification_judge
+extract_and_score_keywords:
+  description: |-
+    Using the role classification output from the previous task, extract the `best_role` filename stem from context. Then construct the role instruction file path as: `{role_instructions_folder}/<best_role>.md` and load it using FileReadTool.
+
+    **File format notes:**
+    - The file is a flat instruction document. The keyword extraction guidance begins after the line `STEP 1 — BEFORE WRITING ANYTHING:` (plain text marker, not a markdown header).
+    - Read everything between `STEP 1 —` and `STEP 2 —` as the keyword extraction rules to follow.
+
+    Then read the full JD at {jd_file_path} and extract two comprehensive keyword lists per the STEP 1 instructions:
+
+    **List A — Hard Keywords:** Every tool, language, framework, platform, methodology, and technical concept named in the JD (e.g. PyTorch, LangChain, CI/CD, vector database, inference pipeline, dbt, Spark).
+
+    **List B — Soft Keywords:** Every trait, competency, working style, and behavioral expectation (e.g. ownership, cross-functional collaboration, production-grade, self-directed, stakeholder communication).
+
+    For each keyword in both lists:
+    1. Assign an importance score: Critical / High / Medium / Low
+       - Base scoring on: frequency of mention, placement (title/requirements > nice-to-have), role instruction file signals
+    2. Assign an inclusion strategy: verbatim / paraphrase / contextual embedding / omit
+       - Follow the inclusion strategy rules in the STEP 1 section of the role file exactly
+
+    Do not hallucinate keywords not present or strongly implied by the JD.
+  expected_output: |-
+    A structured JSON object:
+    {
+      "selected_role": "string — filename stem extracted from context (e.g. 'ai_ml_engineer')",
+      "list_a_hard_keywords": [
+        { "keyword": "string", "score": "Critical|High|Medium|Low", "inclusion": "verbatim|paraphrase|contextual embedding|omit", "rationale": "string" }
+      ],
+      "list_b_soft_keywords": [
+        { "keyword": "string", "score": "Critical|High|Medium|Low", "inclusion": "verbatim|paraphrase|contextual embedding|omit", "rationale": "string" }
+      ],
+      "critical_count": 0,
+      "high_count": 0,
+      "extraction_notes": "string — any anomalies, ambiguities, or role instruction gaps observed"
+    }
+  agent: ats_keyword_extraction_specialist
+  context:
+  - classify_role
+write_tailored_latex_resume_and_export_pdf:
+  description: |-
+    Using the scored keyword lists from the extraction phase, write a complete tailored LaTeX resume. Extract `selected_role` from context, construct the role instruction file path as `{role_instructions_folder}/<selected_role>.md`, and load it using FileReadTool. Follow everything from `STEP 2 — WRITE THE RESUME` to end of file — including ATS RULES, ROLE-SPECIFIC ATS SIGNALS, SUPPRESS THIS LANGUAGE, EXTRAPOLATION, WRITING STYLE, and FORMAT sections.
+
+    **Role instruction file format note:**
+    - Role writing rules begin after the plain text marker `STEP 2 — WRITE THE RESUME`. Read all content after that marker as the complete ruleset.
+
+    **Experience file structure — each file in {experience_files_folder} follows this format:**
+    - `# Job Title | Company Name` — role header (parse for section/company label in sourcing map)
+    - `**Duration:**` — date range (use exactly as written for resume dates)
+    - `## Consolidated Bullets` — all unique accomplishments in best phrasing. THIS is the primary source for bullet selection and adaptation.
+    - `## Metrics Reference` — quick lookup table of quantified metrics. USE THIS to inject specific numbers into adapted bullets.
+
+    Steps:
+    1. Use DirectoryReadTool to list and read ALL files in {experience_files_folder}. This gives you the actual filenames that exist — do NOT guess or hardcode filenames. For each file returned: extract the role header, duration, all bullets under `## Consolidated Bullets`, and all metrics under `## Metrics Reference`. Concatenate the full raw content of all experience files into a single string — pass this forward as `experience_files_content` for the evaluator.
+    2. Semantically match bullets from `## Consolidated Bullets` to Critical and High keywords. Cross-reference `## Metrics Reference` to inject quantified scale into every selected bullet.
+    3. Read {latex_template_path} and populate all sections following the FORMAT rules in the role instruction file.
+    4. Adapt selected bullets — apply verbatim/paraphrase/contextual embedding strategies per keyword list, enforce Paul Graham writing style, suppress analyst language per role instruction file.
+    5. Apply extrapolation rules — flag every extrapolated item.
+    6. Append at bottom: `EXTRAPOLATED — PREP BEFORE INTERVIEW` with format: what was added | what it assumes | one sentence on how to talk about it honestly.
+    7. Output the complete .tex file content.
+    8. Build a sourcing map: for each resume bullet record source_file (filename), original_bullet (from ## Consolidated Bullets), adapted_bullet (as it appears in resume), keywords_embedded, and reason.
+  expected_output: |-
+    Four outputs:
+
+    1. **Complete LaTeX resume** — full .tex file content ready for pdflatex compilation
+
+    2. **Sourcing map** — JSON array:
+    [
+      {
+        "section": "string",
+        "source_file": "string — filename e.g. galaara.md",
+        "original_bullet": "string — exact text from ## Consolidated Bullets",
+        "adapted_bullet": "string — as written in the resume",
+        "keywords_embedded": ["string"],
+        "reason": "string"
+      }
+    ]
+
+    3. **Concatenated experience files content** — full raw text of ALL experience files read (used by SourceAttributionJudge)
+
+    4. **Gap report** — Critical/High keywords not naturally embeddable, with EXTRAPOLATED section prep notes
+  agent: expert_resume_writer_and_ats_optimizer
+  context:
+  - extract_and_score_keywords
+evaluate_pipeline_output:
+  description: |-
+    Evaluate the resume writing phase output using the `JudgevalLocalEvaluatorRunner` tool. All required inputs must be extracted from the context of the previous task (Write Tailored LaTeX Resume and Export PDF) — do NOT attempt to read files from disk for this task.
+
+    **Step 1 — Extract from context:**
+    - `phase_output`: the complete .tex content string from the Resume Writer output
+    - `keyword_list_a`: the List A JSON string from the keyword extraction task context
+    - `keyword_list_b`: the List B JSON string from the keyword extraction task context
+    - `sourcing_map`: the sourcing map JSON string from the Resume Writer output
+    - `experience_files_content`: the concatenated experience file content referenced in the Resume Writer output
+    - `pdflatex_exit_code`: the pdflatex exit code from the Resume Writer output (default 0 if not present)
+
+    **Step 2 — Call `JudgevalLocalEvaluatorRunner`** with the above parameters directly. Do not attempt file reads. Pass all values as strings extracted from context.
+
+    **Pass threshold:** {eval_pass_threshold} (default 0.80)
+
+    **4 Code-Based Judges (run automatically by the tool):**
+    1. **ATSKeywordHitRateJudge** (numeric, weight 35%) — Critical+High keyword coverage
+    2. **MetricDensityJudge** (numeric, weight 25%) — quantified bullets ratio
+    3. **SourceAttributionJudge** (binary, weight 20%) — anti-hallucination, no gold answer needed
+    4. **FormatComplianceJudge** (binary, weight 20%) — pdflatex exit code + 4 required section headers
+
+    **Step 3 — Interpret tool output:**
+    For each judge scoring below 0.80, surface the issue with severity and description. Compose a `retry_recommendation` the Resume Writer can act on immediately.
+
+    Write the evaluation log as a structured JSON file to {logs_folder}/eval/
+
+    **Optional qualitative checks (not yet configured):** 2 additional LLM Agent Judges can be enabled via platform settings for deeper narrative quality and instruction-compliance review passes.
+
+    If this is attempt {eval_max_retries} and score is still below threshold, produce a full diagnostic escalation report: root causes, what was attempted, what failed, and recommended manual interventions.
+  expected_output: |-
+    {
+      "composite_score": 0.0,
+      "passed": false,
+      "pass_threshold": 0.80,
+      "judge_scores": {
+        "ATSKeywordHitRateJudge": {"score": 0.0, "weight": 0.35, "details": "X/Y Critical+High keywords matched"},
+        "MetricDensityJudge": {"score": 0.0, "weight": 0.25, "details": "X/Y bullets contain numeric metrics"},
+        "SourceAttributionJudge": {"score": 0.0, "weight": 0.20, "details": "X/Y bullets traceable to source files"},
+        "FormatComplianceJudge": {"score": 0.0, "weight": 0.20, "details": "pdflatex_exit_code=0, X/4 sections found"}
+      },
+      "issues": [
+        {"judge": "string", "score": 0.0, "severity": "Critical|High", "description": "string"}
+      ],
+      "retry_recommendation": "string — actionable fix instructions for Resume Writer",
+      "eval_log_path": "string — path written to {logs_folder}/eval/",
+      "escalation_report": "string — only present if max retries hit and still failing"
+    }
+  agent: pipeline_quality_evaluator
+  context:
+  - write_tailored_latex_resume_and_export_pdf
+log_run_and_generate_optimization_report:
+  description: |-
+    Using the eval results from the previous task as context, perform three operations:
+
+    **Step 1 — Search Cognee for historical patterns:**
+    Search Cognee memory for past runs with similar failure patterns. Use these queries:
+    - "MetricDensityJudge failure resume bullets no numeric metrics"
+    - "SourceAttributionJudge failure sourcing map traceability"
+    - "ATSKeywordHitRateJudge failure keyword coverage {jd_file_path}"
+    Retrieve top 5 results per query. Note which judges have failed repeatedly across runs.
+
+    **Step 2 — Assemble structured run log:**
+    Build a complete JSON run log with:
+    - `run_id`: {run_id}
+    - `timestamp`: current UTC datetime
+    - `jd_file_path`: {jd_file_path}
+    - `phase_scores`: all 4 judge scores + composite from eval context
+    - `passed`: boolean
+    - `retry_count`: from eval context
+    - `issues`: list of failing judges with severity
+    - `retry_recommendation`: from eval context
+    - `historical_pattern_note`: summary of what Cognee search revealed (e.g. "MetricDensityJudge has failed in 3 of last 5 runs")
+
+    **Step 3 — Store run log into Cognee memory:**
+    Call CogneeMemoryTool with operation="add", tags="run_log,eval,{run_id}", and the full run log JSON as content.
+
+    Also store each failing judge result separately with tags="judge_failure,<judge_name>,<role>" for granular future retrieval.
+
+    **Step 4 — Generate ranked optimization report:**
+    Based on current eval + historical patterns, produce a prioritized optimization report:
+    - Rank issues by frequency across runs (from Cognee history) × severity
+    - For each issue: problem description, affected component (agent/task/tool/prompt), specific fix recommendation, estimated impact (High/Medium/Low)
+    - Flag any issue appearing in 3+ consecutive runs as a **Systemic Failure** requiring architectural change
+
+    Output the report to {logs_folder}/optimization_report_{run_id}.md
+  expected_output: |-
+    Two outputs:
+
+    1. **Structured run log JSON:**
+    {
+      "run_id": "string",
+      "timestamp": "ISO UTC string",
+      "jd_file_path": "string",
+      "phase_scores": {
+        "ATSKeywordHitRateJudge": 0.0,
+        "MetricDensityJudge": 0.0,
+        "SourceAttributionJudge": 0.0,
+        "FormatComplianceJudge": 0.0,
+        "composite": 0.0
+      },
+      "passed": false,
+      "issues": [...],
+      "retry_recommendation": "string",
+      "historical_pattern_note": "string",
+      "cognee_store_status": "added | error"
+    }
+
+    2. **Ranked optimization report** (markdown) saved to {logs_folder}/optimization_report_{run_id}.md:
+    - Executive summary (1 sentence per systemic failure flagged)
+    - Ranked issue table: Rank | Judge | Frequency | Severity | Fix | Impact
+    - Systemic failures section (if any)
+    - Next run checklist
+  agent: pipeline_optimization_advisor
+  context:
+  - evaluate_pipeline_output
