@@ -6,6 +6,8 @@ authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "crewai[file-processing,litellm,tools]==1.14.7",
+    "sentence-transformers>=3.0",
+    "watchdog>=3.0",
 ]
 
 [project.scripts]
@@ -15,6 +17,8 @@ train = "obsidianresumeforge.main:train"
 replay = "obsidianresumeforge.main:replay"
 test = "obsidianresumeforge.main:test"
 run_with_trigger = "obsidianresumeforge.main:run_with_trigger"
+prep_interview = "obsidianresumeforge.main:prep_interview"
+kg_report = "obsidianresumeforge.main:kg_report"
 
 [build-system]
 requires = ["hatchling"]
@@ -22,6 +26,14 @@ build-backend = "hatchling.build"
 
 [tool.crewai]
 type = "crew"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
 
 [tool.uv]
 override-dependencies = ["litellm<=1.82.6"]

@@ -20,3 +20,10 @@ __pycache__/
 # crewai runtime
 .chroma/
 db/
+
+# cognee runtime data and venv
+.cognee-data/
+.cognee-venv/
+
+# bundled frontend libs (vis.js loaded from CDN)
+lib/

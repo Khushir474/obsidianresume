@@ -1,8 +1,13 @@
 import re
 import json
+import logging
+import os
+import datetime
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 from typing import Type
+
+logger = logging.getLogger(__name__)
 
 
 class JudgevalLocalEvaluatorRunnerInput(BaseModel):
@@ -194,6 +199,27 @@ class JudgevalLocalEvaluatorRunnerTool(BaseTool):
         role_instruction_content: str = ""
     ) -> str:
         """Execute all 4 judges and return composite evaluation as a JSON string."""
+        run_id = os.getenv("RUN_ID", "unknown")
+        log_path = f"/tmp/judge_args_{run_id}.log"
+        arg_summary = {
+            "phase_output_len": len(phase_output),
+            "keyword_list_a_len": len(keyword_list_a),
+            "keyword_list_b_len": len(keyword_list_b),
+            "sourcing_map_len": len(sourcing_map),
+            "experience_files_content_len": len(experience_files_content),
+            "pdflatex_exit_code": pdflatex_exit_code,
+            "phase_output_preview": phase_output[:200],
+            "keyword_list_a_preview": keyword_list_a[:200],
+            "sourcing_map_preview": sourcing_map[:200],
+        }
+        try:
+            with open(log_path, "w") as f:
+                f.write(f"[{datetime.datetime.utcnow().isoformat()}] judge args\n")
+                json.dump(arg_summary, f, indent=2)
+        except Exception:
+            pass
+        logger.info("JudgevalLocalEvaluatorRunner args: %s", arg_summary)
+
         try:
             ats = self._judge_ats_keyword_hit_rate(phase_output, keyword_list_a, keyword_list_b)
             metric = self._judge_metric_density(phase_output)

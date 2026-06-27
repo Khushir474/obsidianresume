@@ -4,7 +4,7 @@ from crewai import LLM
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import DirectoryReadTool
-from obsidianresumeforge.tools.custom_tool import CachedFileReadTool, CachedFileWriterTool
+from obsidianresumeforge.tools.custom_tool import CachedFileReadTool, CachedFileWriterTool, LatexToPdfTool
 from obsidianresumeforge.tools.judgeval_local_evaluator_runner import JudgevalLocalEvaluatorRunnerTool
 from obsidianresumeforge.tools.cognee_memory_tool import CogneeMemoryTool
 
@@ -36,14 +36,14 @@ class ObsidianresumeforgeCrew:
             
             max_execution_time=None,
             llm=LLM(
-                model="openrouter/google/gemini-2.5-flash-lite",
-                
-                
+                model="openrouter/google/gemini-2.5-flash",
+
+
             ),
-            
+
         )
-        
-    
+
+
     @agent
     def role_classification_judge(self) -> Agent:
         
@@ -65,12 +65,8 @@ class ObsidianresumeforgeCrew:
 
 
             max_execution_time=None,
-            llm=LLM(
-                model="openrouter/z-ai/glm-5",
-            ),
-            function_calling_llm=LLM(
-                model="openrouter/google/gemini-2.5-flash-lite",
-            ),
+            llm=LLM(model="openrouter/z-ai/glm-5"),
+            # llm=LLM(model="openrouter/google/gemini-2.5-flash"),
 
         )
 
@@ -84,7 +80,9 @@ class ObsidianresumeforgeCrew:
             
             
             tools=[				CachedFileReadTool(),
+				CachedFileWriterTool(),
 				DirectoryReadTool(),
+				LatexToPdfTool(),
 				CogneeMemoryTool()],
             reasoning=False,
             max_reasoning_attempts=None,
@@ -95,17 +93,12 @@ class ObsidianresumeforgeCrew:
 
 
             max_execution_time=None,
-            llm=LLM(
-                model="openrouter/z-ai/glm-5",
-                # model="openrouter/anthropic/claude-sonnet-4.6",
-            ),
-            function_calling_llm=LLM(
-                model="openrouter/google/gemini-2.5-flash-lite",
-            ),
-            
+            llm=LLM(model="openrouter/z-ai/glm-5"),
+            # llm=LLM(model="openrouter/google/gemini-2.5-flash"),
+
         )
-        
-    
+
+
     @agent
     def pipeline_quality_evaluator(self) -> Agent:
         
@@ -126,7 +119,7 @@ class ObsidianresumeforgeCrew:
             
             max_execution_time=None,
             llm=LLM(
-                model="openrouter/google/gemini-2.5-flash-lite",
+                model="openrouter/google/gemini-2.5-flash",
                 
                 
             ),
@@ -219,7 +212,7 @@ class ObsidianresumeforgeCrew:
             process=Process.sequential,
             verbose=True,
 
-            chat_llm=LLM(model="openrouter/gpt-4o-mini"),
+            chat_llm=LLM(model="openrouter/openai/gpt-4o-mini"),
         )
 
 

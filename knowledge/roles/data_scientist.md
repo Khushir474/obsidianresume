@@ -64,3 +64,7 @@ At the bottom, add:
 "EXTRAPOLATED — PREP BEFORE INTERVIEW"
 For each addition: what was added | what it assumes | one sentence
 on how to talk about it honestly
+
+--- APPENDED FROM JD: UChicago Data Scientist II ---
+Additional hard keywords: R, SAS, Alteryx, Power BI, Tableau, Epic, Cogito, Clarity, SlicerDicer, Reporting Workbench, forecasting methodologies, operational intelligence, optimization, simulation, model governance, validation methodologies, healthcare analytics, clinical operations, research datasets, workforce optimization, executive dashboards, scorecards, relational databases, healthcare data structures
+Additional soft keywords: strategic partner, executive presentation, consultative problem-solving, subject matter expert, model governance, analytical standards, mentorship of junior staff, stakeholder management, cross-functional collaboration, attention to detail, continuous improvement

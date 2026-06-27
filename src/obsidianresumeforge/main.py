@@ -48,6 +48,19 @@ def _patch_safe_paths() -> None:
 _patch_safe_paths()
 
 from obsidianresumeforge.crew import ObsidianresumeforgeCrew
+from obsidianresumeforge.run_id import generate_run_id
+from obsidianresumeforge.output_writers import (
+    write_eval_log,
+    write_optimization_report,
+    write_knowledge_graph_note,
+    update_knowledge_graph,
+    write_interview_prep_note,
+    write_kg_insights_note,
+)
+from obsidianresumeforge.knowledge_graph_viz import generate_html
+from obsidianresumeforge.knowledge_graph_store import KGStore
+from obsidianresumeforge.retry_orchestrator import run_with_retry
+from obsidianresumeforge.cognee_lifecycle import ensure_cognee_running
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -73,7 +86,25 @@ def run():
     """
     Run the crew.
     """
-    ObsidianresumeforgeCrew().crew().kickoff(inputs=_inputs('run_20260624_001'))
+    ensure_cognee_running()
+    logs_folder = os.getenv('LOGS_FOLDER', '/path/to/JobSearch/')
+    vault_path = os.getenv('VAULT_PATH', '/path/to/JobSearch/')
+    jd_file_path = os.getenv('JD_FILE_PATH', '/path/to/JDs/YourRole.md')
+    run_id = generate_run_id(logs_folder)
+    os.environ["RUN_ID"] = run_id
+    inputs = _inputs(run_id)
+    max_retries = int(os.getenv("EVAL_MAX_RETRIES", "1"))
+    crew_output, _ = run_with_retry(
+        crew_factory=ObsidianresumeforgeCrew,
+        inputs=inputs,
+        max_retries=max_retries,
+        logs_folder=logs_folder,
+    )
+    write_optimization_report(run_id, crew_output, logs_folder)
+    update_knowledge_graph(run_id, jd_file_path, crew_output, vault_path)
+    store = KGStore(vault_path)
+    generate_html(store, vault_path)
+    write_kg_insights_note(vault_path)
 
 
 def train():
@@ -105,6 +136,61 @@ def test():
 
     except Exception as e:
         raise Exception(f"An error occurred while testing the crew: {e}")
+
+def run_with_trigger():
+    """Watch vault JDs/ folder and kick off crew when a new JD is dropped."""
+    import time
+    from obsidianresumeforge.watcher import start_watcher
+
+    vault_path = os.getenv("VAULT_PATH", "/path/to/JobSearch/")
+    logs_folder = os.getenv("LOGS_FOLDER", vault_path)
+
+    def _kickoff(jd_path: str) -> None:
+        run_id = generate_run_id(logs_folder)
+        os.environ["RUN_ID"] = run_id
+        inputs = _inputs(run_id)
+        inputs["jd_file_path"] = jd_path
+        ObsidianresumeforgeCrew().crew().kickoff(inputs=inputs)
+
+    observer = start_watcher(vault_path=vault_path, kickoff_fn=_kickoff)
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+
+
+def kg_report():
+    """Regenerate KnowledgeGraph/insights.md from the current KGStore.
+
+    Usage: uv run kg_report
+    No API calls — reads only from kg_store.json.
+    """
+    vault_path = os.getenv("VAULT_PATH", "/path/to/JobSearch/")
+    out = write_kg_insights_note(vault_path)
+    print(f"KG insights note written: {out}")
+
+
+def prep_interview():
+    """Write an interview prep stub note for a completed run.
+
+    Usage: uv run prep_interview --run-id run_20260627_001
+    Reads from {VAULT_PATH}/KnowledgeGraph/kg_store.json — no API calls.
+    """
+    import argparse
+    parser = argparse.ArgumentParser(description="Generate interview prep stub from a completed run.")
+    parser.add_argument("--run-id", required=True, help="Run ID, e.g. run_20260627_001")
+    args = parser.parse_args()
+
+    vault_path = os.getenv("VAULT_PATH", "/path/to/JobSearch/")
+    out = write_interview_prep_note(args.run_id, vault_path)
+    if out:
+        print(f"Interview prep note written: {out}")
+    else:
+        print(f"Run '{args.run_id}' not found in KGStore. Run the crew first.")
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

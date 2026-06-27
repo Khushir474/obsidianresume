@@ -111,15 +111,17 @@ write_tailored_latex_resume_and_export_pdf:
     3. Read {latex_template_path} and populate all sections following the FORMAT rules in the role instruction file.
     4. Adapt selected bullets — apply verbatim/paraphrase/contextual embedding strategies per keyword list, enforce Paul Graham writing style, suppress analyst language per role instruction file.
     5. Apply extrapolation rules — flag every extrapolated item.
-    6. Append at bottom: `EXTRAPOLATED — PREP BEFORE INTERVIEW` with format: what was added | what it assumes | one sentence on how to talk about it honestly.
-    7. Output the complete .tex file content.
+    6. Build the `EXTRAPOLATED — PREP BEFORE INTERVIEW` block as plain text OUTSIDE the .tex file (for your final answer only, never inside the LaTeX source): for each extrapolated item — what was added | what it assumes | one sentence on how to talk about it honestly.
+    7. Call `Compile LaTeX to PDF` tool with the complete .tex content (must NOT contain the EXTRAPOLATED block — keep the .tex clean for publication). For `output_stem`, derive it as `Khushi_Ranganatha_Resume_<company>_<role>_<YYYYMMDD>` where company comes from the JD filename (use "Unknown" if no company is identifiable) and role is the `selected_role` stem in TitleCase with no underscores (e.g. `ai_ml_engineer` → `AIMLEngineer`). Use today's date for YYYYMMDD. Record the returned `exit_code` and `pdf_path` for the evaluator.
     8. Build a sourcing map: for each resume bullet record source_file (filename), original_bullet (from ## Consolidated Bullets), adapted_bullet (as it appears in resume), keywords_embedded, and reason.
   expected_output: |-
-    Four outputs:
+    Five outputs:
 
-    1. **Complete LaTeX resume** — full .tex file content ready for pdflatex compilation
+    1. **Complete LaTeX resume** — full .tex file content
 
-    2. **Sourcing map** — JSON array:
+    2. **PDF compilation result** — `pdf_path` (absolute path to saved PDF or null), `pdflatex_exit_code` (0 = success)
+
+    3. **Sourcing map** — JSON array:
     [
       {
         "section": "string",
@@ -131,25 +133,34 @@ write_tailored_latex_resume_and_export_pdf:
       }
     ]
 
-    3. **Concatenated experience files content** — full raw text of ALL experience files read (used by SourceAttributionJudge)
+    4. **Concatenated experience files content** — full raw text of ALL experience files read (used by SourceAttributionJudge)
 
-    4. **Gap report** — Critical/High keywords not naturally embeddable, with EXTRAPOLATED section prep notes
+    5. **Gap report** — Critical/High keywords not naturally embeddable, with EXTRAPOLATED section prep notes
   agent: expert_resume_writer_and_ats_optimizer
   context:
   - extract_and_score_keywords
 evaluate_pipeline_output:
   description: |-
-    Evaluate the resume writing phase output using the `JudgevalLocalEvaluatorRunner` tool. All required inputs must be extracted from the context of the previous task (Write Tailored LaTeX Resume and Export PDF) — do NOT attempt to read files from disk for this task.
+    Evaluate the resume writing phase output using the `JudgevalLocalEvaluatorRunner` tool. All required inputs must be extracted from context — do NOT attempt to read files from disk for this task.
 
-    **Step 1 — Extract from context:**
-    - `phase_output`: the complete .tex content string from the Resume Writer output
-    - `keyword_list_a`: the List A JSON string from the keyword extraction task context
-    - `keyword_list_b`: the List B JSON string from the keyword extraction task context
-    - `sourcing_map`: the sourcing map JSON string from the Resume Writer output
-    - `experience_files_content`: the concatenated experience file content referenced in the Resume Writer output
-    - `pdflatex_exit_code`: the pdflatex exit code from the Resume Writer output (default 0 if not present)
+    **Step 1 — Extract these EXACT fields from context (two source tasks):**
 
-    **Step 2 — Call `JudgevalLocalEvaluatorRunner`** with the above parameters directly. Do not attempt file reads. Pass all values as strings extracted from context.
+    From the Write Tailored LaTeX Resume task output:
+    - `phase_output`: the complete .tex file content string (the full LaTeX source, NOT a file path)
+    - `sourcing_map`: the JSON array string of sourcing objects (each has source_file, original_bullet, adapted_bullet, keywords_embedded, reason)
+    - `experience_files_content`: the concatenated raw text of ALL experience files (the full string, not a path)
+    - `pdflatex_exit_code`: the integer exit code from the pdflatex compilation (0 = success; use 0 if not stated)
+
+    From the Extract and Score Keywords task output:
+    - `keyword_list_a`: the `list_a_hard_keywords` JSON array serialized as a string (include the full JSON array with keyword/score/inclusion/rationale objects)
+    - `keyword_list_b`: the `list_b_soft_keywords` JSON array serialized as a string (same structure)
+
+    **Step 2 — Call `JudgevalLocalEvaluatorRunner`** passing ALL SIX fields above as arguments.
+    - Do NOT pass `jd_file_path`, `eval_output_path`, or any other field not listed above.
+    - Do NOT attempt file reads before calling the tool.
+    - `keyword_list_a` and `keyword_list_b` MUST be valid JSON array strings (e.g. `[{"keyword": "Python", "score": "Critical", ...}]`).
+    - `sourcing_map` MUST be a valid JSON array string.
+    - `experience_files_content` MUST be the raw concatenated text string, NOT a file path.
 
     **Pass threshold:** {eval_pass_threshold} (default 0.80)
 
@@ -187,6 +198,7 @@ evaluate_pipeline_output:
     }
   agent: pipeline_quality_evaluator
   context:
+  - extract_and_score_keywords
   - write_tailored_latex_resume_and_export_pdf
 log_run_and_generate_optimization_report:
   description: |-
